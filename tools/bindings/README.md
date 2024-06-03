@@ -12,11 +12,11 @@
 | Go       |         |             |                     |         |
 
 
-## Howto
+## How-to
 ###### As of version 2.1r1
 
 ### HTTP API
-All requests require the `key` query parameter with a valid API key, if you dont have a valid permsision a error will be returned.
+All requests require the `key` query parameter with a valid API key, if you don't have a valid permission a error will be returned.
 
 #### Base response
 ```go
@@ -92,7 +92,7 @@ type ProxyStatus struct {
         "Address": "192.168.0.1:5555",
         "Network": "tcp",
         "BytesSent": 5555,
-        "LasstContactAgo": 1230
+        "LastContactAgo": 1230
     },
     {
         "Id": 2,
@@ -100,7 +100,7 @@ type ProxyStatus struct {
         "Address": "192.168.0.1:6666",
         "Network": "tcp",
         "BytesSent": 555534,
-        "LasstContactAgo": 55
+        "LastContactAgo": 55
     }
 ]
 ```
@@ -210,7 +210,7 @@ Queries:
 * close: Allows closing proxies, requires `AuthCanClose`
 * inject: Allows injecting into proxies, requires `AuthCanInject`
 * filter: Allows filtering of packets, requires `AuthCanFilter`
-* default: Only used if `filter` is true, must iether be `drop` or `allow`, defining the default action if a packet times out.
+* default: Only used if `filter` is true, must either be `drop` or `allow`, defining the default action if a packet times out.
 * network: Filter what packets will be sent on the websocket callback
 
 Make request with the ws:// schema.
@@ -226,7 +226,7 @@ From server:
 type wsServerTypes int
 
 const (
-	wsServerError  wsServerTypes = -1 // Should never be recived, used as a internal nil
+	wsServerError  wsServerTypes = -1 // Should never be received, used as a internal nil
 	wsServerPacket wsServerTypes = 1  // A packet, type is wsPacket
 )
 
@@ -235,7 +235,7 @@ type wsServerMsg struct {
 	Data any
 }
 
-type BaseReponse struct {
+type BaseResponse struct {
 	Status int
 	Data   interface{} // If Status != 200 this is a error string
 }
@@ -305,7 +305,7 @@ type wsPacket struct {
 #### Inject
 Auth: `inject`
 
-Inject pakcets
+Inject packets
 
 `Type` must be 1
 <br>`Target` is the target proxy, or `-1` for all
@@ -324,7 +324,7 @@ Inject pakcets
 #### Filter
 Auth: `filter`
 
-This must sent within 500ms of the packet being recived to prevent the default action from happening
+This must sent within 500ms of the packet being received to prevent the default action from happening
 
 `Type` must be 2
 <br>`Target` is the `PktNum` from `wsPacket`

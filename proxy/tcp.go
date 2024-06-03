@@ -11,18 +11,20 @@ import (
 	"time"
 )
 
+const tcpMpxName string = "TcpPlain"
+
 // TCP proxy
 type TcpProxy struct {
 	ctx       context.Context                // Proxy context
 	ctxCancel context.CancelCauseFunc        // Cancel context
-	client    net.Conn                       // Client connection
-	server    net.Conn                       // Server connection
+	client    *net.TCPConn                   // Client connection
+	server    *net.TCPConn                   // Server connection
 	pktChan   chan<- handler.ProxyPacketData // Packet channel
 	logger    *slog.Logger
 }
 
 // Listen for packets
-func (t *TcpProxy) listen(c net.Conn) {
+func (t *TcpProxy) listen(c *net.TCPConn) {
 	// Serverbound
 	serverbound := true
 	source := t.client
@@ -61,6 +63,10 @@ func (t *TcpProxy) listen(c net.Conn) {
 	}
 }
 
+func (t *TcpProxy) MpxName() string {
+	return tcpMpxName
+}
+
 func (t *TcpProxy) Network() string {
 	return "tcp"
 }
@@ -91,13 +97,13 @@ func (t *TcpProxy) SendToServer(data []byte) error {
 	return err
 }
 
-// Initilize the proxy
+// Initialize the proxy
 func (t *TcpProxy) Init(pktChan chan<- handler.ProxyPacketData, ctx context.Context, cancel context.CancelCauseFunc) error {
 	if t.pktChan != nil {
-		t.logger.Error("Alreadey initialized")
+		t.logger.Error("Already initialized")
 		return errors.New("already initialized")
 	}
-	t.logger.Debug("Initalizing")
+	t.logger.Debug("Initializing")
 	t.pktChan = pktChan
 	t.ctx = ctx
 	t.ctxCancel = cancel
@@ -109,20 +115,24 @@ func (t *TcpProxy) Init(pktChan chan<- handler.ProxyPacketData, ctx context.Cont
 // Create a new TcpProxy
 func newTcpProxy(client net.Conn, server net.Conn) handler.IProxy {
 	t := &TcpProxy{
-		client: client,
-		server: server,
+		client: client.(*net.TCPConn),
+		server: server.(*net.TCPConn),
 		logger: slog.Default(),
 	}
 	return t
 }
 
 // Listen & Accept new connections to create new proxies
-func TcpListner(ctx context.Context, cancel context.CancelCauseFunc, ps handler.IConnectionAdder) {
+func TcpListener(ctx context.Context, cancel context.CancelCauseFunc, ps handler.IConnectionAdder) {
 	logger := slog.Default()
 	// Convert to TCP form
-	pAddr, err := net.ResolveTCPAddr("tcp", ps.GetProxyAddr().String())
+	addr, err := ps.GetProxyAddr(tcpMpxName)
 	if err != nil {
-		logger.Warn("Failed to resolve ProxyAddr", "ProxyAddr", ps.GetProxyAddr().String(), "Error", err.Error())
+		panic(fmt.Sprintf("Failed to get proxy address for Mpx: %v", err))
+	}
+	pAddr, err := net.ResolveTCPAddr("tcp", addr.String())
+	if err != nil {
+		logger.Warn("Failed to resolve ProxyAddr", "ProxyAddr", addr.String(), "Error", err.Error())
 		cancel(fmt.Errorf("failed to resolve proxy addr: %v", err))
 		return
 	}
@@ -132,7 +142,7 @@ func TcpListner(ctx context.Context, cancel context.CancelCauseFunc, ps handler.
 		cancel(fmt.Errorf("failed to resolve server addr: %v", err))
 		return
 	}
-	// Listner
+	// Listener
 	con, err := net.ListenTCP("tcp", pAddr)
 	if err != nil {
 		logger.Warn("Failed to listen on proxy", "Error", err.Error(), "ProxyAddress", pAddr.String())

@@ -4,7 +4,6 @@ import (
 	"context"
 	"ezproxy/api"
 	"ezproxy/handler"
-	"ezproxy/proxy"
 	"fmt"
 	"log/slog"
 	"net"
@@ -17,8 +16,8 @@ import (
 
 const (
 	versionExperimental uint32 = 0x80000000
-	proxyVersion        uint32 = 0x02_02_01
-	apiVersion          uint32 = 0x02_01_02
+	proxyVersion        uint32 = 0x03_00_00 | versionExperimental
+	apiVersion          uint32 = 0x03_00_00
 )
 
 func versionToString(v uint32) string {
@@ -29,7 +28,7 @@ func versionToString(v uint32) string {
 	// 1:2: Reserved
 	// 2:4: Major version (Major features added, breaking changes)
 	// 4:6: Minor version (Minor features added, no breaking changes)
-	// 6:8: Revision      (Bug fixes, Perfomance changes)
+	// 6:8: Revision      (Bug fixes, Performance changes)
 	suffix := ""
 	if v&versionExperimental != 0 {
 		suffix = "e"
@@ -49,7 +48,7 @@ func getLocalIp() (net.Addr, error) {
 }
 
 type ConfigAddress struct {
-	Address string `yaml:"Address"` // Leave empty to use local addres
+	Address string `yaml:"Address"` // Leave empty to use local address
 	Port    uint16 `yaml:"Port"`
 }
 
@@ -107,16 +106,16 @@ type ConfigLua struct {
 }
 
 type ConfigData struct {
-	ProxyAddress  ConfigAddress `yaml:"ProxyAddress"`
-	ServerAddress ConfigAddress `yaml:"ServerAddress"`
-	Api           ConfigApi     `yaml:"Api"`
-	Logging       ConfigLogging `yaml:"Logging"`
-	Lua           ConfigLua     `yaml:"Lua"`
-	Debug         ConfigDebug   `yaml:"Debug"`
+	Mpx           map[string]ConfigAddress `yaml:"Mpx"`
+	ServerAddress ConfigAddress            `yaml:"ServerAddress"`
+	Api           ConfigApi                `yaml:"Api"`
+	Logging       ConfigLogging            `yaml:"Logging"`
+	Lua           ConfigLua                `yaml:"Lua"`
+	Debug         ConfigDebug              `yaml:"Debug"`
 }
 
 func (c *ConfigData) IsEmpty() bool {
-	if !c.ProxyAddress.IsEmpty() {
+	if len(c.Mpx) == 0 {
 		return false
 	}
 	if !c.ServerAddress.IsEmpty() {
@@ -151,6 +150,10 @@ func loadCfg() *ConfigData {
 		fmt.Fprintf(os.Stderr, "Config is empty\n")
 		return nil
 	}
+	if len(cfg.Mpx) == 0 {
+		fmt.Fprint(os.Stderr, "No MPX set, the proxy would do nothing")
+		return nil
+	}
 	if cfg.Debug.Enable {
 		// Print this EVERYWHERE. This is a SERIOUS warning, as having this set will use the ApiKey configured. This is BAD.
 		fmt.Fprintf(os.Stderr, "Debug mode is enabled, DO NOT USE THIS IN PRODUCTION.\n")
@@ -183,19 +186,14 @@ func setupLogger(cfg *ConfigData) {
 
 func setupSpawnerAndApi(cfg *ConfigData) handler.IProxySpawner {
 	logger := slog.Default()
-	pxAddr, err := net.ResolveTCPAddr("tcp", cfg.ProxyAddress.ToString())
-	if err != nil {
-		logger.Error("Failed to resolve proxy address", "Error", err.Error(), "Address", cfg.ProxyAddress.ToString())
-		return nil
-	}
 	svAddr, err := net.ResolveTCPAddr("tcp", cfg.ServerAddress.ToString())
 	if err != nil {
 		logger.Error("Failed to resolve server address", "Error", err.Error(), "Address", cfg.ServerAddress.ToString())
 		return nil
 	}
 	ctx, cancel := context.WithCancelCause(context.Background())
-	logger.Debug("Setup proxySpawner", "Server", svAddr.String(), "Proxy", pxAddr.String())
-	ps, err := handler.NewProxySpawner(svAddr, pxAddr, ctx, proxy.TcpListner, proxy.UdpListner)
+	logger.Debug("Setup proxySpawner", "Server", svAddr.String())
+	ps, err := handler.NewProxySpawner(svAddr, ctx)
 	if err != nil {
 		logger.Error("Failed to create ProxySpawner", "Error", err.Error())
 		cancel(err)
@@ -221,6 +219,28 @@ func setupSpawnerAndApi(cfg *ConfigData) handler.IProxySpawner {
 		}
 		logger.Debug("Starting API", "Address", cfg.Api.Address.ToString())
 		go http.ListenAndServe(cfg.Api.Address.ToString(), nil)
+	}
+	for mpxName, addr := range cfg.Mpx {
+		logger.Debug("Attempting to add MPX", "MpxName", mpxName, "Address", addr.ToString())
+		px, listener, err := GetMpxInfo(mpxName)
+		if err != nil {
+			logger.Error("Failed to get MPX info (Not registered in mpx.go)", "MpxName", mpxName, "Error", err.Error())
+			cancel(fmt.Errorf("failed to add mpx '%s': %v", mpxName, err))
+			return nil
+		}
+		ad, err := net.ResolveTCPAddr("tcp", addr.ToString())
+		if err != nil {
+			logger.Error("Failed to resolve MPX address", "MpxName", mpxName, "Error", err.Error())
+			cancel(fmt.Errorf("failed to resolve MPX for '%s' address: %v", mpxName, err))
+			return nil
+		}
+		err = ps.RegisterMpx(mpxName, px, ad, listener)
+		if err != nil {
+			logger.Error("Failed to register MPX", "MpxName", mpxName, "Error", err.Error())
+			cancel(fmt.Errorf("failed to register mpx '%s': %v", mpxName, err))
+			return nil
+		}
+		logger.Debug("Registered MPX")
 	}
 	return ps
 }

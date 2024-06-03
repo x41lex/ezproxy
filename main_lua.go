@@ -13,9 +13,15 @@ import (
 func main() {
 	fmt.Fprintf(os.Stderr, "Compiled with LUA support, this is a experimental feature and will likely change in the future, it is also very likely to cause crashes with lua\n")
 	cfg := loadCfg()
+	if cfg == nil {
+		return
+	}
 	setupLogger(cfg)
 	slog.Default().Warn("Compiled with LUA support, this is a experimental feature and will likely change in the future, it is also very likely to cause crashes if your lua code is bad")
 	ps := setupSpawnerAndApi(cfg)
+	if ps == nil {
+		return
+	}
 	if cfg.Lua.Enable {
 		mode := ezp_lua.LuaRunMain
 		switch cfg.Lua.Mode {

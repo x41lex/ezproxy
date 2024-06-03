@@ -12,7 +12,7 @@ For the UDP socks-esc thing we will use TCP to send data over UDP (So its statef
 2. EzProxy will verify the request and will setup a IP:PORT it will wait for a connection on
 3. If the connection is not established in a given timeout the connection will close
 4. After a single connection is connected EzProxy will stop listening
-5. Data can now be tramsited via this IP & will be forwarded 
+5. Data can now be transmitted via this IP & will be forwarded 
 
 This will work nicely sometimes, but for when it *must* be UDP we will
 
@@ -37,7 +37,7 @@ const (
 The priority may look like 
 
 ```go
-func RegisterDispatcher(dispatchFunc func(), proto Protcol, priority uint, filterFunc func())
+func RegisterDispatcher(dispatchFunc func(), proto Protocol, priority uint, filterFunc func())
 
 
 RegisterDispatcher(tcpConnection, ProtocolTcp, 0, nil)
@@ -46,10 +46,36 @@ RegisterDispatcher(udpConnection, ProtocolUdp, 0, nil)
 RegisterDispatcher(tcpOverUdpConnection, ProtocolTcp, 1, isTcpOverUdp)
 ```
 
-We'd figure out what we need to open based on the protcool flags, if we have ProtocolTcp we'd open a TCP listener, same with UDP, we could add these as interfaces, but I might just do them hard coded because I dont see what other layer 4 protocols I'm going to implement.
+We'd figure out what we need to open based on the protocol flags, if we have ProtocolTcp we'd open a TCP listener, same with UDP, we could add these as interfaces, but I might just do them hard coded because I don't see what other layer 4 protocols I'm going to implement.
 
 Changes need to made to a **lot** of stuff, for starters
 
 * proxy/udp & proxy/tcp both need to have there listeners removed
 * IConnectionAdder is going to be removed, and `AddConnection` will need a entire rework
 * Listeners need be added
+
+## Optimize
+Stats tracking should be done separately so it doesn't delay stuff with the lock.
+
+## I cant spell
+"Listener" is misspelled "Listener" a lot. I think I did it once then just copy pasted it or VsCode auto completed it.
+
+# LUA 
+Lua needs to be changed to make MPX fully work.
+
+I might make it so you can start/close new MPX while running
+
+## Mpx Logging
+MpxName should be logged in way more places, namely in the proxy/ directory
+
+## New Helpers
+Some new util functions for proxies could be really nice things like
+* Comparing network addresses & protocols
+* Context based listeners
+* Context based readers
+* Context based writers
+
+Go through the proxy code and try to remove the useless stuff
+
+## Tests
+MPX Broke the (very few) tests I had written, I gotta rewrite them... at some point, but I really don't want to.

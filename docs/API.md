@@ -92,7 +92,7 @@ type InjectData struct {
 <br>Query parameters are 
 * perms `uint64`: Permission bitfield (See above)
 
-You must have all the permissions you are attempting to create with to create a key with those, the only exception is `AuthCanMakeKeys`, to duplicae that value you need `AuthCanDuplicateKeys`.
+You must have all the permissions you are attempting to create with to create a key with those, the only exception is `AuthCanMakeKeys`, to duplicate that value you need `AuthCanDuplicateKeys`.
 
 ```go
 type NewKeyData struct {

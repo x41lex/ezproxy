@@ -1,18 +1,24 @@
-# Config for EzProxy 2.0r2
-# Proxy server address
-ProxyAddress:
-  # IP Address to use as proxy
-  # Leave empty to use local
-  # default: ""
-  Address: &LocalAddress ""
-  # Proxy port
-  # Default: 5554
-  Port: 5554
+# Config for EzProxy 3.0r2
+
+# Current Mpx types
+# TcpPlain  : A normal TCP proxy
+# UdpPlain  : A normal UDP proxy
+# UdpOverTcp: A proxy thats client is a TCP connection & server is a UDP connection.
+Mpx:
+  TcpPlain:
+    Address: ""
+    Port: 5553
+  UdpPlain:
+    Address: ""
+    Port: 5554
+  UdpOverTcp:
+    Address: ""
+    Port: 5554
 
 # Server address
 ServerAddress:
   # Server address to connect to as server
-  Address: *LocalAddress
+  Address: ""
   # Server port
   Port: 5555
 
@@ -32,7 +38,7 @@ Api:
   UseAuth: false
   Address: 
     # default: ""
-    Address: *LocalAddress
+    Address: ""
     # default: 8080
     Port: 8080
 
@@ -44,7 +50,7 @@ Lua:
   Enable: false
   # Path of the lua file to execute
   Path: examples/example.lua
-  # Mode of exection
+  # Mode of execution
   #   main: Run EzpMain
   #   callback: Run callbacks on actions
   # Default: main

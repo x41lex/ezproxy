@@ -23,7 +23,7 @@ type ProxyContainer struct {
 	logger          *slog.Logger
 }
 
-// Handles packets recived
+// Handles packets received
 func (pc *ProxyContainer) handlePacket() {
 	for {
 		select {
@@ -63,11 +63,15 @@ func (pc *ProxyContainer) handlePacket() {
 	}
 }
 
+func (pc *ProxyContainer) MpxName() string {
+	return pc.px.MpxName()
+}
+
 // Inject data to client, calls the sendCallback and doesn't send it if the callback returns false
 func (pc *ProxyContainer) SendToClient(data []byte) error {
 	if !pc.spawner.HandleSend(data, CapFlag_Injected, pc) {
 		pc.logger.Debug("Not sending packet from SendToClient", "Data", data, "Dest", pc.GetClientAddr(), "Serverbound", false)
-		// Dont send
+		// Don't send
 		return nil
 	}
 	err := pc.px.SendToClient(data)
@@ -87,7 +91,7 @@ func (pc *ProxyContainer) SendToClient(data []byte) error {
 func (pc *ProxyContainer) SendToServer(data []byte) error {
 	if !pc.spawner.HandleSend(data, CapFlag_ToServer|CapFlag_Injected, pc) {
 		pc.logger.Debug("Not sending packet from SendToServer", "Data", data, "Dest", pc.GetServerAddr(), "Serverbound", true)
-		// Dont send
+		// Don't send
 		return nil
 	}
 	err := pc.px.SendToServer(data)
@@ -169,7 +173,7 @@ func NewProxyContainer(parent IProxySpawner, px IProxy, id int) (IProxyContainer
 	pc.logger.Debug("Init on new IProxy", "Id", id, "Client", px.GetClientAddr())
 	err := px.Init(pktChan, pCtx, pCtxCancel)
 	if err != nil {
-		pCtxCancel(fmt.Errorf("failed to initilize: %v", err))
+		pCtxCancel(fmt.Errorf("failed to initialize: %v", err))
 		return nil, err
 	}
 	return pc, nil

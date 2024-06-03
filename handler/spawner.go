@@ -15,6 +15,13 @@ type rChan struct {
 	cancel context.CancelFunc
 }
 
+type mpxInfo struct {
+	Name     string
+	Addr     net.Addr
+	Protocol PxProto
+	Listener IProxyListener
+}
+
 // Spawns proxies as needed
 type ProxySpawner struct {
 	currentId          int                     // The current ID of the proxy
@@ -23,7 +30,6 @@ type ProxySpawner struct {
 	connectionLock     sync.Mutex              // Lock for connections
 	totalSent          uint64                  // Total bytes sent
 	serverAddr         net.Addr                // Server address
-	proxyAddr          net.Addr                // Proxy address
 	context            context.Context         // Context for the spawner, this is the parent of all contexts
 	contextCancel      context.CancelCauseFunc // Cancel function
 	wg                 sync.WaitGroup          // Wait group for handlers
@@ -36,18 +42,20 @@ type ProxySpawner struct {
 	callbackCtx        context.Context
 	callbackCancel     context.CancelFunc
 	totalSentWriteLock sync.Mutex
+	mpxLock            sync.Mutex
+	mpxs               map[string]mpxInfo
 }
 
 // Adds a new proxy, returns the proxies ID or a error if something goes wrong
 func (p *ProxySpawner) AddConnection(px IProxy) (IProxyContainer, error) {
 	if p.context.Err() != nil {
-		p.logger.Error("Attempted to addListner with dead context", "Error", p.context.Err(), "Cause", context.Cause(p.context))
+		p.logger.Error("Attempted to addListener with dead context", "Error", p.context.Err(), "Cause", context.Cause(p.context))
 		return nil, p.context.Err()
 	}
 	// Get a new ID
 	p.currentIdLock.Lock()
 	thisId := p.currentId
-	// Create the container & Initlize the proxy
+	// Create the container & Initialize the proxy
 	p.logger.Debug("Adding new IProxyContainer", "Id", thisId)
 	pc, err := p.containerMaker(p, px, thisId)
 	if err != nil {
@@ -67,9 +75,9 @@ func (p *ProxySpawner) AddConnection(px IProxy) (IProxyContainer, error) {
 	return pc, nil
 }
 
-func (p *ProxySpawner) addListener(h IProxyListner) {
+func (p *ProxySpawner) addListener(h IProxyListener) {
 	if p.context.Err() != nil {
-		p.logger.Error("Attempted to addListner with dead context", "Error", p.context.Err(), "Cause", context.Cause(p.context))
+		p.logger.Error("Attempted to addListener with dead context", "Error", p.context.Err(), "Cause", context.Cause(p.context))
 		return
 	}
 	retryCount := 0
@@ -106,6 +114,32 @@ func (p *ProxySpawner) addListener(h IProxyListner) {
 			return
 		}
 	}
+}
+
+func (p *ProxySpawner) RegisterMpx(mpxName string, protocol PxProto, address net.Addr, listener IProxyListener) error {
+	p.mpxLock.Lock()
+	defer p.mpxLock.Unlock()
+	// Verify the mpxName is not in use.
+	if _, found := p.mpxs[mpxName]; found {
+		return errors.New("mpx name already registered")
+	}
+	// Check if the address is in use
+	for _, v := range p.mpxs {
+		// Check if the protocol is already setup
+		if v.Addr.String() == address.String() && (v.Protocol == protocol || v.Protocol == PxProtoAll) {
+			return errors.New("protocol already in use on address")
+		}
+	}
+	// Add the Mpx
+	p.mpxs[mpxName] = mpxInfo{
+		Name:     mpxName,
+		Addr:     address,
+		Protocol: protocol,
+		Listener: listener,
+	}
+	// Run it
+	go p.addListener(listener)
+	return nil
 }
 
 // Callback for all sends
@@ -227,8 +261,19 @@ func (p *ProxySpawner) GetContext() context.Context {
 }
 
 // Get address of the proxy spawner
-func (p *ProxySpawner) GetProxyAddr() net.Addr {
-	return p.proxyAddr
+func (p *ProxySpawner) GetProxyAddr(mpx string) (net.Addr, error) {
+	if info, found := p.mpxs[mpx]; found {
+		return info.Addr, nil
+	}
+	return nil, errors.New("mpx not found")
+}
+
+func (p *ProxySpawner) GetMpxAddrs() map[string]net.Addr {
+	result := make(map[string]net.Addr)
+	for k, v := range p.mpxs {
+		result[k] = v.Addr
+	}
+	return result
 }
 
 // Get the address of the server
@@ -371,17 +416,14 @@ func (p *ProxySpawner) GetRecvChan(ctx context.Context) (recv <-chan PacketChanD
 
 // Creates a new proxy spawner
 // Uses default container (NewProxyContainer)
-// logger may be nil, at least one listner must exist.
-func NewProxySpawner(server net.Addr, proxy net.Addr, ctx context.Context, listeners ...IProxyListner) (*ProxySpawner, error) {
-	return NewProxySpawnerWithContainer(server, proxy, NewProxyContainer, ctx, listeners...)
+// logger may be nil, at least one listener must exist.
+func NewProxySpawner(server net.Addr, ctx context.Context) (*ProxySpawner, error) {
+	return NewProxySpawnerWithContainer(server, NewProxyContainer, ctx)
 }
 
 // Creates a new proxy spawner
-// logger may be nil, at least one listner must exist.
-func NewProxySpawnerWithContainer(server net.Addr, proxy net.Addr, containerMaker CreateIProxyContainer, ctx context.Context, listeners ...IProxyListner) (*ProxySpawner, error) {
-	if len(listeners) == 0 {
-		return nil, errors.New("no listeners given")
-	}
+// logger may be nil, at least one listener must exist.
+func NewProxySpawnerWithContainer(server net.Addr, containerMaker CreateIProxyContainer, ctx context.Context) (*ProxySpawner, error) {
 	psContext, cancel := context.WithCancelCause(ctx)
 	ps := &ProxySpawner{
 		currentId:          0,
@@ -390,7 +432,6 @@ func NewProxySpawnerWithContainer(server net.Addr, proxy net.Addr, containerMake
 		connectionLock:     sync.Mutex{},
 		totalSent:          0,
 		serverAddr:         server,
-		proxyAddr:          proxy,
 		context:            psContext,
 		contextCancel:      cancel,
 		wg:                 sync.WaitGroup{},
@@ -403,9 +444,8 @@ func NewProxySpawnerWithContainer(server net.Addr, proxy net.Addr, containerMake
 		callbackCtx:        nil,
 		callbackCancel:     nil,
 		totalSentWriteLock: sync.Mutex{},
-	}
-	for _, h := range listeners {
-		go ps.addListener(h)
+		mpxLock:            sync.Mutex{},
+		mpxs:               make(map[string]mpxInfo),
 	}
 	if ps.context.Err() != nil {
 		err := context.Cause(ps.context)

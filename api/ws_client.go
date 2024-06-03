@@ -119,9 +119,9 @@ func (w *wsApi) handleClientAction(t websocket.MessageType, data []byte) {
 		flag := msg.Extra & wsFilterShouldSend
 		if flag == 0 {
 			w.filterMap[msg.Target] = wsFilterDrop
-			w.parent.logger.Debug("Setting filtermap", "Target", msg.Target, "Action", "drop")
+			w.parent.logger.Debug("Setting filter map", "Target", msg.Target, "Action", "drop")
 		} else {
-			w.parent.logger.Debug("Setting filtermap", "Target", msg.Target, "Action", "allow")
+			w.parent.logger.Debug("Setting filter map", "Target", msg.Target, "Action", "allow")
 			w.filterMap[msg.Target] = wsFilterAllow
 		}
 		w.filterChan <- struct{}{}

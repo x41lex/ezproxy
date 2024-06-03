@@ -6,7 +6,7 @@ import (
 )
 
 func writeResponse(w http.ResponseWriter, status int, data interface{}) error {
-	jdata, err := json.Marshal(baseResponse{
+	jsonData, err := json.Marshal(baseResponse{
 		Status: status,
 		Data:   data,
 	})
@@ -17,6 +17,6 @@ func writeResponse(w http.ResponseWriter, status int, data interface{}) error {
 	}
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(200)
-	_, err = w.Write(jdata)
+	_, err = w.Write(jsonData)
 	return err
 }

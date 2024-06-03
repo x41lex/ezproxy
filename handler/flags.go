@@ -1,6 +1,6 @@
 package handler
 
-// Capture falgs
+// Capture flags
 type CapFlags uint32
 
 const (

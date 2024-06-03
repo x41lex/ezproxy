@@ -110,7 +110,7 @@ func runLuaCallback(parent *luaBindings, l *lua.LState, sp handler.IProxySpawner
 		onPacket:     nil,
 		filterPacket: nil,
 		rcv:          nil,
-		rcvCtx:       context.Background(), // Just some bullshit incase we dont use this.
+		rcvCtx:       context.Background(), // Just some bullshit incase we don't use this.
 		luaCancel:    nil,
 		luaCtx:       nil,
 	}

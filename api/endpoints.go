@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-// Adds a new endpoint to the API, the endpoint will end up as /api/<version>/<name>, require the request be the 'method' specified and require 'perms' permisions if [authLookup] is enabled.
+// Adds a new endpoint to the API, the endpoint will end up as /api/<version>/<name>, require the request be the 'method' specified and require 'perms' permissions if [authLookup] is enabled.
 func (a *WebApi) addEndpoint(name string, version int, method string, handler http.HandlerFunc, perms ...authPerms) {
 	a.mux.HandleFunc(fmt.Sprintf("/api/%d/%s", version, name), func(w http.ResponseWriter, r *http.Request) {
 		a.logger.Debug("Request to endpoint", "EndpointName", name, "Version", version, "Endpoint", fmt.Sprintf("/api/%d/%s", version, name), "RequestedURI", r.RequestURI)
@@ -21,7 +21,7 @@ func (a *WebApi) addEndpoint(name string, version int, method string, handler ht
 		}
 		if a.auth != nil && !a.auth.checkPermission(w, r, perms...) {
 			// Other permission data already logged
-			a.logger.Debug("Missing permisions on request", "EndpointName", name, "Version", version)
+			a.logger.Debug("Missing permissions on request", "EndpointName", name, "Version", version)
 			return
 		}
 		handler(w, r)
@@ -40,11 +40,11 @@ func (a *WebApi) documentEndpoint(name string, desc string, version int, method 
 
 // Status of a handler, used for /api/1/handler
 type handlerStatus struct {
-	ConnectionCount int    // Number of connections
-	Alive           bool   // Is the handler alive
-	BytesSent       uint64 // Number of bytes sent
-	ProxyAddress    string // Proxy address (IP):(PORT)
-	ServerAddress   string // Server address (IP):(PORT)
+	ConnectionCount int               // Number of connections
+	Alive           bool              // Is the handler alive
+	BytesSent       uint64            // Number of bytes sent
+	MpxAddresses    map[string]string // MpxName -> Proxy address (IP):(PORT)
+	ServerAddress   string            // Server address (IP):(PORT)
 }
 
 func (a *WebApi) epStatus(w http.ResponseWriter, r *http.Request) {
@@ -52,8 +52,11 @@ func (a *WebApi) epStatus(w http.ResponseWriter, r *http.Request) {
 		ConnectionCount: len(a.handler.GetAllProxies()),
 		Alive:           a.handler.IsAlive(),
 		BytesSent:       a.handler.GetBytesSent(),
-		ProxyAddress:    a.handler.GetProxyAddr().String(),
+		MpxAddresses:    make(map[string]string),
 		ServerAddress:   a.handler.GetServerAddr().String(),
+	}
+	for k, v := range a.handler.GetMpxAddrs() {
+		data.MpxAddresses[k] = v.String()
 	}
 	a.logger.Debug("Sending HandlerStatus")
 	writeResponse(w, 200, data)
@@ -147,7 +150,7 @@ func (a *WebApi) epInject(w http.ResponseWriter, r *http.Request) {
 func isValidCreationPerm(currentValue int, userPerms int, desiredPerms int, perm authPerms) (int, bool) {
 	// First we check if we even care about this one
 	if !checkPermission(desiredPerms, perm) {
-		// We dont
+		// We don't
 		return currentValue, true
 	}
 	// Then we check if the user has permission to do anything with that
@@ -229,7 +232,7 @@ func (a *WebApi) epGetKey(w http.ResponseWriter, r *http.Request) {
 	validPerms, err := createNewPerms(ourPerms, int(newPerms))
 	if err != nil {
 		a.logger.Debug("Lacking permission to add to key", "Error", err.Error(), "RequestedPerms", int(newPerms), "OurPerms", ourPerms)
-		writeResponse(w, http.StatusForbidden, fmt.Sprintf("lacking permission to add '%s' permision", err.Error()))
+		writeResponse(w, http.StatusForbidden, fmt.Sprintf("lacking permission to add '%s' permission", err.Error()))
 		return
 	}
 	if validPerms == 0 {

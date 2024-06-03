@@ -36,18 +36,6 @@ type WebApi struct {
 	endpoints  []apiEndpoint         // Endpoint info for self documentation
 }
 
-func (w *WebApi) hasFilterer() bool {
-	for _, v := range w.wsocks {
-		if v.ctx.Err() != nil {
-			continue
-		}
-		if v.canFilter {
-			return true
-		}
-	}
-	return false
-}
-
 // Adds a new auth key, with all permissions needed.
 // A error will be returned if authentication is disabled or the key is already in use.
 func (w *WebApi) AddAuth(key uint64, perms ...authPerms) error {
@@ -130,7 +118,7 @@ func NewWebApi(mux *http.ServeMux, useAuth bool, ph handler.IProxySpawner) *WebA
 	wa.addEndpoint("proxies", 1, http.MethodGet, wa.epProxyList, AuthCanCheckStatus)
 	wa.documentEndpoint("proxies", "Get status of all connected clients", 1, "GET", int(AuthCanCheckStatus))
 	wa.addEndpoint("inject", 1, http.MethodPost, wa.epInject, AuthCanInject)
-	wa.documentEndpoint("inject", "Inject data to a target, send JSON data to inject. (TODO: Better docuemnt)", 1, "POST", int(AuthCanInject))
+	wa.documentEndpoint("inject", "Inject data to a target, send JSON data to inject. (TODO: Better document)", 1, "POST", int(AuthCanInject))
 	wa.addEndpoint("newkey", 1, http.MethodGet, wa.epGetKey, AuthCanMakeKeys)
 	wa.documentEndpoint("newkey", "Create a new key with your permissions.", 1, "GET", int(AuthCanMakeKeys))
 	wa.addEndpoint("keyinfo", 1, http.MethodGet, wa.epGetAuthValue) // Anyone can use this given they have a valid API key
