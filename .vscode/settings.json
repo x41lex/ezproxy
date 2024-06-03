@@ -1,0 +1,11 @@
+{
+    "Lua.diagnostics.globals": [
+        "lprint",
+        "log",
+        "sleep",
+        "LEVEL_DEBUG",
+        "LEVEL_INFO",
+        "LEVEL_WARN",
+        "LEVEL_ERROR",
+    ]
+}

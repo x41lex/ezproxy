@@ -1,0 +1,66 @@
+# Config for EzProxy 2.0r2
+# Proxy server address
+ProxyAddress:
+  # IP Address to use as proxy
+  # Leave empty to use local
+  # default: ""
+  Address: &LocalAddress ""
+  # Proxy port
+  # Default: 5554
+  Port: 5554
+
+# Server address
+ServerAddress:
+  # Server address to connect to as server
+  Address: *LocalAddress
+  # Server port
+  Port: 5555
+
+# Logging info
+Logging:
+  # Must be "debug", "info", "warn" or "error"
+  # Default: warn
+  Level: warn
+
+# API info
+Api:
+  # Should the API be used, settings this to false disables the API and websocket.
+  # default: true
+  Enable: true
+  # Should authentication be used.
+  # default: true
+  UseAuth: false
+  Address: 
+    # default: ""
+    Address: *LocalAddress
+    # default: 8080
+    Port: 8080
+
+# LUA settings - EZP must have been compiled with the 'lua_binding' build tag
+# See docs/lua.md
+Lua:
+  # Should Lua be used
+  # Default: false
+  Enable: false
+  # Path of the lua file to execute
+  Path: examples/example.lua
+  # Mode of exection
+  #   main: Run EzpMain
+  #   callback: Run callbacks on actions
+  # Default: main
+  Mode: main
+
+# Debug settings
+Debug:
+  # Set to true to enable debugging features
+  # This SHOULD NOT be true for production.
+  # default: false
+  Enable: false
+  # Constant API key to set, only used if 'debug' is true
+  # default: 0
+  ApiKey: 0xbeef
+
+# TODO: Network allowance, also only let some stuff work so for instance
+#   'tcp'
+#   'udp'
+# enables shit

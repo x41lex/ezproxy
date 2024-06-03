@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../TestServers"
+		}
+	],
+	"settings": {
+		"go.buildTags": "lua_bindings"
+	}
+}

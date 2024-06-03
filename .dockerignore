@@ -1,0 +1,21 @@
+# Remove all uneeded things
+# Visual Studio Code file
+.vscode
+# Integration tests
+integration
+integration_main.go
+# Unit tests
+**/*test.go
+mocks
+# Client tools
+tools
+examples
+# Documentation
+docs
+**/*.md
+# Build files
+*.exe
+ezproxy
+log
+# Deprecated stuff
+**/_*

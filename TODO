@@ -1,0 +1,55 @@
+Test using a windows proxy (Search 'Proxy')
+
+Socks5 support (https://datatracker.ietf.org/doc/html/rfc1928)
+
+For UDP there could a socks-esc thing where you use the API to open a new UDP connection (Like you do in SOCKS) we can 
+connect to & use that for UDP.
+
+
+For the UDP socks-esc thing we will use TCP to send data over UDP (So its stateful)
+
+1. Send a request to the API / WebSocket / Proxy (The 'Source' for now on)
+2. EzProxy will verify the request and will setup a IP:PORT it will wait for a connection on
+3. If the connection is not established in a given timeout the connection will close
+4. After a single connection is connected EzProxy will stop listening
+5. Data can now be tramsited via this IP & will be forwarded 
+
+This will work nicely sometimes, but for when it *must* be UDP we will
+
+1. Send a request to the source
+2. EzProxy will verify the request, then wait on a UDP port, a timeout will still be used
+3. EzProxy will only allow data & reply on the first address that connects
+4. Data can be transmitted, after a configured timeout of no contact this UDP connection will be pruned
+
+I think to coexist with other proxies now we need a better proxy dispatcher
+
+My idea is to have a priority based approach along with filtering for instance built in filters might be 
+
+```go
+// Assume this flags in a bitfield
+const (
+    // Not bitfield
+    ProtocolTcp
+    ProtocolUdp
+)
+```
+
+The priority may look like 
+
+```go
+func RegisterDispatcher(dispatchFunc func(), proto Protcol, priority uint, filterFunc func())
+
+
+RegisterDispatcher(tcpConnection, ProtocolTcp, 0, nil)
+RegisterDispatcher(udpConnection, ProtocolUdp, 0, nil)
+// Higher priority goes first, so this is called first then falls through
+RegisterDispatcher(tcpOverUdpConnection, ProtocolTcp, 1, isTcpOverUdp)
+```
+
+We'd figure out what we need to open based on the protcool flags, if we have ProtocolTcp we'd open a TCP listener, same with UDP, we could add these as interfaces, but I might just do them hard coded because I dont see what other layer 4 protocols I'm going to implement.
+
+Changes need to made to a **lot** of stuff, for starters
+
+* proxy/udp & proxy/tcp both need to have there listeners removed
+* IConnectionAdder is going to be removed, and `AddConnection` will need a entire rework
+* Listeners need be added
