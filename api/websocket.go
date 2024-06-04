@@ -16,7 +16,7 @@ type wsServerTypes int
 type wsFilterValue int
 
 const (
-	wsServerError  wsServerTypes = -1 // Should never be recived, used as a internal nil
+	wsServerError  wsServerTypes = -1 // Should never be received, used as a internal nil
 	wsServerPacket wsServerTypes = 1  // A packet
 
 	wsFilterDrop  wsFilterValue = -1 // Wait for a action
@@ -60,14 +60,14 @@ type wsServerMsg struct {
 	Data any
 }
 
-// !! DONT USE !!
+// !! DON'T USE !!
 // Breaking changes may happen in the future - Only use this if you really know what your doing.
 func (w *wsApi) _sendRaw(status int, wsType wsServerTypes, data any) error {
 	msg := baseResponse{
 		Status: status,
 	}
 	if status != 200 {
-		// I *really* hope thats a string, but I dont think slowing everything down
+		// I *really* hope thats a string, but I don't think slowing everything down
 		// to check using reflection is worth it.
 		msg.Data = data
 	} else {
@@ -83,7 +83,7 @@ func (w *wsApi) _sendRaw(status int, wsType wsServerTypes, data any) error {
 	}
 	eData, err := json.Marshal(msg)
 	if err != nil {
-		// Fatal as this should only be called by interal methods
+		// Fatal as this should only be called by internal methods
 		// if it failed to marshal its because something is seriously fucked
 		// and the problem will repeat.
 		panic(err.Error())
@@ -125,7 +125,7 @@ func (w *wsApi) recv() {
 			// This should only ever be a open channel if the callback wasn't set.
 			px, err := w.parent.handler.GetProxy(pkt.ProxyId)
 			if err != nil {
-				w.parent.logger.Warn("Got packet from recvChan with proxy ID that lead to a non existant proxy", "Id", pkt.ProxyId)
+				w.parent.logger.Warn("Got packet from recvChan with proxy ID that lead to a non existent proxy", "Id", pkt.ProxyId)
 				continue
 			}
 			w.handleRecv(pkt.Data, pkt.Flags, px)
@@ -291,7 +291,7 @@ func (a *WebApi) newWebSocket(w http.ResponseWriter, r *http.Request) {
 		key, val, ok = a.auth.getAuthValues(w, r)
 		if !ok {
 			a.logger.Error("authentication of both succeeded & failed", "Key", key, "Map", a.auth.keys)
-			// I don't understand how this is possbile.
+			// I don't understand how this is possible.
 			return
 		}
 	}
@@ -303,7 +303,7 @@ func (a *WebApi) newWebSocket(w http.ResponseWriter, r *http.Request) {
 			a.logger.Debug("WebSocket can close")
 			ws.canClose = true
 		} else {
-			a.logger.Debug("Missing permssions for 'close' websocket not ok")
+			a.logger.Debug("Missing permissions for 'close' websocket not ok")
 			w.WriteHeader(http.StatusForbidden)
 			w.Write([]byte("missing permissions for 'close'"))
 			return
@@ -314,7 +314,7 @@ func (a *WebApi) newWebSocket(w http.ResponseWriter, r *http.Request) {
 			ws.canInject = true
 			a.logger.Debug("WebSocket can inject")
 		} else {
-			a.logger.Debug("Missing permssions for 'inject' websocket not ok")
+			a.logger.Debug("Missing permissions for 'inject' websocket not ok")
 			w.WriteHeader(http.StatusForbidden)
 			w.Write([]byte("missing permissions for 'inject'"))
 			return
@@ -322,7 +322,7 @@ func (a *WebApi) newWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	if qr.Has("filter") {
 		if !checkPermission(val, AuthCanFilter) {
-			a.logger.Debug("Missing permssions for 'filter' websocket not ok")
+			a.logger.Debug("Missing permissions for 'filter' websocket not ok")
 			w.WriteHeader(http.StatusForbidden)
 			w.Write([]byte("missing permissions for 'filter'"))
 			return
@@ -349,7 +349,7 @@ func (a *WebApi) newWebSocket(w http.ResponseWriter, r *http.Request) {
 			a.logger.Debug("No default action, set to 'allow'")
 		}
 	}
-	// If we can filter we need to need to set the filter callback, if we dont need to filter we can just get a recvChan
+	// If we can filter we need to need to set the filter callback, if we don't need to filter we can just get a recvChan
 	// if the SendCallback is already set we can just ignore it.
 	if ws.canFilter {
 		err := a.handler.TrySetFilterCallback(ws.handleSend, ws.ctx)

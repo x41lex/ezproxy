@@ -43,21 +43,21 @@ end
 ```
 
 ### 'callback' mode
-An important note is that becuase LUA is not multithreaded packets not handled will be ignored, this behaviour is diffrent and will be documented.
+An important note is that because LUA is not multithreaded packets not handled will be ignored, this behavior is different and will be documented.
 
 ## `EzpOnPacket(PacketData, EzpSpawner) -> bool`
 Cannot exist alongside [EzpFilter](#ezpfilterpacketdata-ezpspawner---bool)
 
-Takes [PacketData](#packetdata) and [EzpSpawner](#ezpspawner) as arguments, called every time a packet is recived.
+Takes [PacketData](#packetdata) and [EzpSpawner](#ezpspawner) as arguments, called every time a packet is received.
 
 If another packet comes in while you are handling a previous one it will be skipped.
 
-If `true` is returend the callback will be uninstalled and the LUA script will be terminated.
+If `true` is returned the callback will be uninstalled and the LUA script will be terminated.
 
 ## `EzpFilter(PacketData, EzpSpawner) -> bool`
 Cannot exist alongside [EzpOnPacket](#ezponpacketpacketdata-ezpspawner---bool)
 
-Takes [PacketData](#packetdata) and [EzpSpawner](#ezpspawner) as arguments, called every time a packet is recived.
+Takes [PacketData](#packetdata) and [EzpSpawner](#ezpspawner) as arguments, called every time a packet is received.
 
 If another packet comes in while you are handling a previous one you will have a configured amount of time (500 MS by default) to handle the packet, before the default action (By default the packet is dropped) happens and the packet is ignored.
 
@@ -91,7 +91,7 @@ function EzpFilter(ezp, pkt)
 end
 ```
 
-# Programming Refrence
+# Programming Reference
 
 ## Globals
 All functions will throw errors if a incorrect number of arguments is provided, or the arguments are of invalid types.
@@ -144,7 +144,7 @@ Example: `127.0.0.1:1234`
 ### `get_packets(callback: (EzpSpawner, PacketData) -> bool) -> nil`
 Waits to get packets, blocking current execution.
 
-Calls the `callback` every time a packet is recived. If the callback returns `true` the callback is removed and this call stops blocking.
+Calls the `callback` every time a packet is received. If the callback returns `true` the callback is removed and this call stops blocking.
 
 Raises a error if `callback` raises a error.
 
@@ -154,7 +154,7 @@ Example
 ```lua
 function callback(ezp, pData) 
     lprint("{%s->%s}", pData.source, pData.dest)
-    -- Dont uninstall
+    -- Don't uninstall
     return false
 end
 ```
@@ -207,7 +207,7 @@ Examples: `tcp`, `udp`
 ### `get_*_addr() -> string`
 `get_client_addr`,  `get_server_addr`
 
-Get addres as IP:PORT
+Get address as IP:PORT
 
 Example: 127.0.0.1:1234
 
@@ -222,7 +222,7 @@ Get the number of milliseconds since the last data sent on this proxy
 `CapFlags_*` bitfield
 
 ```go
-// Capture falgs
+// Capture flags
 type CapFlags uint32
 
 const (

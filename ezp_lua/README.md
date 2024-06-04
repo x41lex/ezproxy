@@ -41,11 +41,11 @@ end
 ```
 
 ### 'callback' mode
-Currently the only callback is on packet recived, the format is the same as the argument for [get_packets](#get_packetscallback-ezpspawner-packetdata---bool---nil)
+Currently the only callback is on packet received, the format is the same as the argument for [get_packets](#get_packetscallback-ezpspawner-packetdata---bool---nil)
 
-If `true` is returned the callback will never be called untill EzProxy is restarted.
+If `true` is returned the callback will never be called until EzProxy is restarted.
 
-# Programming Refrence
+# Programming Reference
 
 ## Globals
 All functions will throw errors if a incorrect number of arguments is provided, or the arguments are of invalid types.
@@ -98,7 +98,7 @@ Example: `127.0.0.1:1234`
 ### `get_packets(callback: (EzpSpawner, PacketData) -> bool) -> nil`
 Waits to get packets, blocking current execution.
 
-Calls the `callback` every time a packet is recived. If the callback returns `true` the callback is removed and this call stops blocking.
+Calls the `callback` every time a packet is received. If the callback returns `true` the callback is removed and this call stops blocking.
 
 Raises a error if `callback` raises a error.
 
@@ -108,7 +108,7 @@ Example
 ```lua
 function callback(ezp, pData) 
     lprint("{%s->%s}", pData.source, pData.dest)
-    -- Dont uninstall
+    -- Don't uninstall
     return false
 end
 ```
@@ -163,7 +163,7 @@ Examples: `tcp`, `udp`
 ### `get_*_addr() -> string`
 `get_client_addr`,  `get_server_addr`
 
-Get addres as IP:PORT
+Get address as IP:PORT
 
 Example: 127.0.0.1:1234
 
@@ -178,7 +178,7 @@ Get the number of milliseconds since the last data sent on this proxy
 `CapFlags_*` bitfield
 
 ```go
-// Capture falgs
+// Capture flags
 type CapFlags uint32
 
 const (

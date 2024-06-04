@@ -49,7 +49,7 @@ func (b *luaBindings) bindSleep(l *lua.LState) int {
 	}
 	ms := l.CheckInt(1)
 	if 0 > ms {
-		l.ArgError(1, "Must be postiive")
+		l.ArgError(1, "Must be positive")
 		return 0
 	}
 	time.Sleep(time.Millisecond * time.Duration(ms))
@@ -143,7 +143,7 @@ func (b *luaBindings) run(path string) {
 	case LuaRunCallback:
 		b.runCallbacks(st, ctx, cancel)
 	default:
-		panic("Invalud Lua callback mode")
+		panic("Invalid Lua callback mode")
 	}
 	return
 }

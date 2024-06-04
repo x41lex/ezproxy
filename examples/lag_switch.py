@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
 """
-This is a simple lag switch, it can be used for a few diffrent things
+This is a simple lag switch, it can be used for a few different things
 
-1. Create false lag (For instance, modify ping up 500ms) / This only sorta works based on the timeout configured in the prozy
+1. Create false lag (For instance, modify ping up 500ms) / This only sorta works based on the timeout configured in the proxy
 2. Drop all packets (This is typical lag switch stuff)
   3. Drop all incoming packets 
   4. Drop all outgoing packets
@@ -20,7 +20,7 @@ CONFIG = {
         "drop_incoming": "<ctrl>+<shift>+f",
         "drop_outgoing": "<ctrl>+<shift>+g",
         "drop_all": None,
-        # "packt_loss": "kb_f5"
+        # "packet_loss": "kb_f5"
     },
     "Timings": {
         "ping": 200,

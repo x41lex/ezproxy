@@ -49,7 +49,7 @@ class Client:
     def HandlePacket(self, px: pws.WsPacket) -> bool:
         pass
 
-class Centeral:
+class Central:
     def __init__(self, api_addr: str, api_key: bool):
         self._api_addr = api_addr
         self._api_key = api_key

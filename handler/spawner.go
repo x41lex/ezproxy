@@ -41,13 +41,13 @@ type ProxySpawner struct {
 // Adds a new proxy, returns the proxies ID or a error if something goes wrong
 func (p *ProxySpawner) AddConnection(px IProxy) (IProxyContainer, error) {
 	if p.context.Err() != nil {
-		p.logger.Error("Attempted to addListner with dead context", "Error", p.context.Err(), "Cause", context.Cause(p.context))
+		p.logger.Error("Attempted to addListener with dead context", "Error", p.context.Err(), "Cause", context.Cause(p.context))
 		return nil, p.context.Err()
 	}
 	// Get a new ID
 	p.currentIdLock.Lock()
 	thisId := p.currentId
-	// Create the container & Initlize the proxy
+	// Create the container & Initialize the proxy
 	p.logger.Debug("Adding new IProxyContainer", "Id", thisId)
 	pc, err := p.containerMaker(p, px, thisId)
 	if err != nil {
@@ -67,9 +67,9 @@ func (p *ProxySpawner) AddConnection(px IProxy) (IProxyContainer, error) {
 	return pc, nil
 }
 
-func (p *ProxySpawner) addListener(h IProxyListner) {
+func (p *ProxySpawner) addListener(h IProxyListener) {
 	if p.context.Err() != nil {
-		p.logger.Error("Attempted to addListner with dead context", "Error", p.context.Err(), "Cause", context.Cause(p.context))
+		p.logger.Error("Attempted to addListener with dead context", "Error", p.context.Err(), "Cause", context.Cause(p.context))
 		return
 	}
 	retryCount := 0
@@ -371,14 +371,14 @@ func (p *ProxySpawner) GetRecvChan(ctx context.Context) (recv <-chan PacketChanD
 
 // Creates a new proxy spawner
 // Uses default container (NewProxyContainer)
-// logger may be nil, at least one listner must exist.
-func NewProxySpawner(server net.Addr, proxy net.Addr, ctx context.Context, listeners ...IProxyListner) (*ProxySpawner, error) {
+// logger may be nil, at least one listener must exist.
+func NewProxySpawner(server net.Addr, proxy net.Addr, ctx context.Context, listeners ...IProxyListener) (*ProxySpawner, error) {
 	return NewProxySpawnerWithContainer(server, proxy, NewProxyContainer, ctx, listeners...)
 }
 
 // Creates a new proxy spawner
-// logger may be nil, at least one listner must exist.
-func NewProxySpawnerWithContainer(server net.Addr, proxy net.Addr, containerMaker CreateIProxyContainer, ctx context.Context, listeners ...IProxyListner) (*ProxySpawner, error) {
+// logger may be nil, at least one listener must exist.
+func NewProxySpawnerWithContainer(server net.Addr, proxy net.Addr, containerMaker CreateIProxyContainer, ctx context.Context, listeners ...IProxyListener) (*ProxySpawner, error) {
 	if len(listeners) == 0 {
 		return nil, errors.New("no listeners given")
 	}

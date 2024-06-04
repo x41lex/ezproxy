@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-// Adds a new endpoint to the API, the endpoint will end up as /api/<version>/<name>, require the request be the 'method' specified and require 'perms' permisions if [authLookup] is enabled.
+// Adds a new endpoint to the API, the endpoint will end up as /api/<version>/<name>, require the request be the 'method' specified and require 'perms' permissions if [authLookup] is enabled.
 func (a *WebApi) addEndpoint(name string, version int, method string, handler http.HandlerFunc, perms ...authPerms) {
 	a.mux.HandleFunc(fmt.Sprintf("/api/%d/%s", version, name), func(w http.ResponseWriter, r *http.Request) {
 		a.logger.Debug("Request to endpoint", "EndpointName", name, "Version", version, "Endpoint", fmt.Sprintf("/api/%d/%s", version, name), "RequestedURI", r.RequestURI)
@@ -21,7 +21,7 @@ func (a *WebApi) addEndpoint(name string, version int, method string, handler ht
 		}
 		if a.auth != nil && !a.auth.checkPermission(w, r, perms...) {
 			// Other permission data already logged
-			a.logger.Debug("Missing permisions on request", "EndpointName", name, "Version", version)
+			a.logger.Debug("Missing permissions on request", "EndpointName", name, "Version", version)
 			return
 		}
 		handler(w, r)
@@ -147,7 +147,6 @@ func (a *WebApi) epInject(w http.ResponseWriter, r *http.Request) {
 func isValidCreationPerm(currentValue int, userPerms int, desiredPerms int, perm authPerms) (int, bool) {
 	// First we check if we even care about this one
 	if !checkPermission(desiredPerms, perm) {
-		// We dont
 		return currentValue, true
 	}
 	// Then we check if the user has permission to do anything with that
@@ -229,7 +228,7 @@ func (a *WebApi) epGetKey(w http.ResponseWriter, r *http.Request) {
 	validPerms, err := createNewPerms(ourPerms, int(newPerms))
 	if err != nil {
 		a.logger.Debug("Lacking permission to add to key", "Error", err.Error(), "RequestedPerms", int(newPerms), "OurPerms", ourPerms)
-		writeResponse(w, http.StatusForbidden, fmt.Sprintf("lacking permission to add '%s' permision", err.Error()))
+		writeResponse(w, http.StatusForbidden, fmt.Sprintf("lacking permission to add '%s' permission", err.Error()))
 		return
 	}
 	if validPerms == 0 {

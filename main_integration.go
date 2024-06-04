@@ -94,6 +94,6 @@ func main() {
 		logger.Debug("Done TcpTestServer", "Ctx.Error", ctx.Err(), "Cause", context.Cause(ctx))
 	})
 	if err = tm.Join(); err != nil {
-		logger.Error("ThreadManager erorr", "Error", err.Error())
+		logger.Error("ThreadManager error", "Error", err.Error())
 	}
 }

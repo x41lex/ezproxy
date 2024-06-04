@@ -21,7 +21,7 @@ type UdpProxy struct {
 	logger       *slog.Logger
 }
 
-// Listner for UDP proxies
+// Listener for UDP proxies
 func (u *UdpProxy) listen() {
 	u.pktChan <- handler.ProxyPacketData{
 		Serverbound: true,
@@ -51,7 +51,7 @@ func (u *UdpProxy) listen() {
 			pktData.Serverbound = true
 			pktData.Dest = u.server
 		} else if compareNetAddr(from, u.server) {
-			// Cientbound
+			// Clientbound
 			pktData.Serverbound = false
 			pktData.Dest = u.client
 		} else {
@@ -67,13 +67,13 @@ func (u *UdpProxy) Network() string {
 	return "udp"
 }
 
-// Initlize UDP proxy
+// Initialize UDP proxy
 func (u *UdpProxy) Init(pktChan chan<- handler.ProxyPacketData, ctx context.Context, cancel context.CancelCauseFunc) error {
 	if u.pktChan != nil {
-		u.logger.Error("Alreadey initialized")
+		u.logger.Error("Already initialized")
 		return errors.New("already initialized")
 	}
-	u.logger.Debug("Initalizing")
+	u.logger.Debug("Initializing")
 	u.pktChan = pktChan
 	u.ctx = ctx
 	u.ctxCancel = cancel
@@ -111,7 +111,7 @@ func (u *UdpProxy) SendToServer(data []byte) error {
 
 // Create a new UDP proxy
 func newUdpProxy(client *net.UDPAddr, proxy *net.UDPConn, server *net.UDPAddr, firstPkt []byte) handler.IProxy {
-	// Thsese should convert properly always because we pass them from Handler
+	// These should convert properly always because we pass them from Handler
 	up := &UdpProxy{
 		client:       client,
 		server:       server,
@@ -123,7 +123,7 @@ func newUdpProxy(client *net.UDPAddr, proxy *net.UDPConn, server *net.UDPAddr, f
 }
 
 // Listener for new UDP proxies
-func UdpListner(ctx context.Context, cancel context.CancelCauseFunc, ps handler.IConnectionAdder) {
+func UdpListener(ctx context.Context, cancel context.CancelCauseFunc, ps handler.IConnectionAdder) {
 	logger := slog.Default()
 	// Get the addresses in UDP form
 	pAddr, err := net.ResolveUDPAddr("udp", ps.GetProxyAddr().String())
@@ -138,7 +138,7 @@ func UdpListner(ctx context.Context, cancel context.CancelCauseFunc, ps handler.
 		cancel(fmt.Errorf("failed to resolve udp server address: %v", err))
 		return
 	}
-	// Open a UDP listner
+	// Open a UDP listener
 	id := -1
 	pCon, err := net.ListenUDP("udp", pAddr)
 	if err != nil {
@@ -160,8 +160,8 @@ func UdpListner(ctx context.Context, cancel context.CancelCauseFunc, ps handler.
 				pCon, err = net.ListenUDP("udp", pAddr)
 				if err != nil {
 					// Can't open UDP connection, fatal error.
-					logger.Warn("Failed to relisten on proxy address", "ProxyAddress", pAddr.String(), "Error", err.Error())
-					cancel(fmt.Errorf("failed to relisten on udp proxy: %v", err))
+					logger.Warn("Failed to re listen on proxy address", "ProxyAddress", pAddr.String(), "Error", err.Error())
+					cancel(fmt.Errorf("failed to re listen on udp proxy: %v", err))
 					return
 				}
 				// Set the id to unused.
@@ -198,6 +198,6 @@ func UdpListner(ctx context.Context, cancel context.CancelCauseFunc, ps handler.
 			continue
 		}
 		id = pc.GetId()
-		logger.Debug("Addeed new connection", "ServerAddress", sAddr.String(), "From", from.String(), "Id", id)
+		logger.Debug("Added new connection", "ServerAddress", sAddr.String(), "From", from.String(), "Id", id)
 	}
 }

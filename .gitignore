@@ -7,6 +7,7 @@
 *.dll
 *.so
 *.dylib
+.pyc
 
 # Test binary, built with `go test -c`
 *.test
@@ -24,3 +25,9 @@ go.work.sum
 # Half done stuff.
 _*.go
 tools/bindings/cs/*
+
+# Log info
+log
+
+# VScode stuff
+.vscode/**

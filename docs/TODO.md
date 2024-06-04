@@ -4,7 +4,7 @@
     * [ ] Handler
     * [ ] Proxy
     * [ ] Integration
-    * [ ] Mocks (Probaly just disable godocs for this)
+    * [ ] Mocks (Probably just disable godocs for this)
 * [ ] Make sure public methods are truly "safe" (Input validation, Documentation, Edge cases checked with & errors documented.)
 * [X] Change from callbacks to a recv channel slice that we clone, and removed 'closed' channels, it might need to either pass 2 channels, or for saying the channel is dead, or a linked context we can cancel, that or just accept multiple callbacks & return some sorta callback function to remove it, maybe a waitgroup?
 
@@ -18,7 +18,7 @@ For removing the callback
   * [ ] Secondary 'signal' channel
   * [ ] Remove with index
   * [ ] Remove with ID
-  * [ ] For callbacks, remove by returning a certian value
+  * [ ] For callbacks, remove by returning a certain value
   * [ ] Waitgroup
    
 Heres The issue, we need only one callback able to filter too, so maybe we split it into (I think this is the better idea.)
@@ -48,17 +48,17 @@ For instance, when LUA takes over the API should respond that filtering is not i
 if self._can_filter and sv.Data.Flags != CapFlag_Injected == 0:
     self.filter(sv.Data.PktNum, r)
 ```
-Makes actually no senese, I was so exhausted I messed it up, changed to 
+Makes actually no sense, I was so exhausted I messed it up, changed to 
 ```python
 if self._can_filter and sv.Data.Flags & CapFlag_Injected == 0:
     self.filter(sv.Data.PktNum, r)
 ```
 Resolves this issue
-* [X] Logging propegation changes
+* [X] Logging propagation changes
 <br>Instead of passing slog.Logger just use `slog.SetDefault`
 <br>Or use `logger.With` type stuff [HowTo](https://betterstack.com/community/guides/logging/logging-in-go/#creating-and-using-child-loggers)
 * [ ] NAT Types?
-* [ ] Maybe add a API change conig & restart type thing?
+* [ ] Maybe add a API change config & restart type thing?
 * [ ] API Change server address & proxy address.
 <br>A new method in the `IProxy` interface would be needed, like `UpdateConfig` or `UpdateServer` thing
 ```go
@@ -66,16 +66,16 @@ type IProxy interface {
     UpdateServer(newServer net.Addr) error
 }
 ```
-that or we could just recreate all the `IProxy` instances, but that sorta seems like a pain, also you could update the server without killing the client as there 2 diffrent connections.
+that or we could just recreate all the `IProxy` instances, but that sorta seems like a pain, also you could update the server without killing the client as there 2 different connections.
 * [ ] Switch clients on the fly 
 <br>Using either Websockets something like
 ```go
 type IProxy interface {
-    ChangeClient(newAdddr net.Adder) error
+    ChangeClient(newAddr net.Adder) error
 }
 ```
-could allow for chaning client addresses on the fly (Killing the old client), but keeping the connection alive, we could also do a TCP 'pool' thing where multiple TCP connections are done in a NAT way, thats kinda interesting I guess.
+could allow for changing client addresses on the fly (Killing the old client), but keeping the connection alive, we could also do a TCP 'pool' thing where multiple TCP connections are done in a NAT way, thats kinda interesting I guess.
 * [X] C# bindings speed up
 * [X] Allow disabling API
 ## Possible
-* [X] Use [go-lua](https://github.com/Shopify/go-lua) to allow for native scripting, honestly though I think this is a pretty useless idea as WebSockets work well, but hey maybe in more limited enviroments this would be nice?
+* [X] Use [go-lua](https://github.com/Shopify/go-lua) to allow for native scripting, honestly though I think this is a pretty useless idea as WebSockets work well, but hey maybe in more limited environments this would be nice?

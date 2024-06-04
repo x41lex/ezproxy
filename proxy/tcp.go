@@ -91,13 +91,13 @@ func (t *TcpProxy) SendToServer(data []byte) error {
 	return err
 }
 
-// Initilize the proxy
+// Initialize the proxy
 func (t *TcpProxy) Init(pktChan chan<- handler.ProxyPacketData, ctx context.Context, cancel context.CancelCauseFunc) error {
 	if t.pktChan != nil {
-		t.logger.Error("Alreadey initialized")
+		t.logger.Error("Already initialized")
 		return errors.New("already initialized")
 	}
-	t.logger.Debug("Initalizing")
+	t.logger.Debug("Initializing")
 	t.pktChan = pktChan
 	t.ctx = ctx
 	t.ctxCancel = cancel
@@ -117,7 +117,7 @@ func newTcpProxy(client net.Conn, server net.Conn) handler.IProxy {
 }
 
 // Listen & Accept new connections to create new proxies
-func TcpListner(ctx context.Context, cancel context.CancelCauseFunc, ps handler.IConnectionAdder) {
+func TcpListener(ctx context.Context, cancel context.CancelCauseFunc, ps handler.IConnectionAdder) {
 	logger := slog.Default()
 	// Convert to TCP form
 	pAddr, err := net.ResolveTCPAddr("tcp", ps.GetProxyAddr().String())
@@ -132,7 +132,7 @@ func TcpListner(ctx context.Context, cancel context.CancelCauseFunc, ps handler.
 		cancel(fmt.Errorf("failed to resolve server addr: %v", err))
 		return
 	}
-	// Listner
+	// Listener
 	con, err := net.ListenTCP("tcp", pAddr)
 	if err != nil {
 		logger.Warn("Failed to listen on proxy", "Error", err.Error(), "ProxyAddress", pAddr.String())

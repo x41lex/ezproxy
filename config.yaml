@@ -44,7 +44,7 @@ Lua:
   Enable: false
   # Path of the lua file to execute
   Path: examples/example.lua
-  # Mode of exection
+  # Mode of execution
   #   main: Run EzpMain
   #   callback: Run callbacks on actions
   # Default: main

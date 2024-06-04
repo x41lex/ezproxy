@@ -41,7 +41,7 @@ func tcpEchoConn(ctx context.Context, c net.Conn) {
 			return
 		}
 		if wrote != n {
-			logger.Warn("Didnt write correct number of bytes", "Read", n, "Wrote", wrote)
+			logger.Warn("Didn't write correct number of bytes", "Read", n, "Wrote", wrote)
 		}
 	}
 	logger.Info("Connection closing", "Error", ctx.Err().Error())
@@ -98,7 +98,7 @@ func TcpTestServer(ctx context.Context, serverAddr net.Addr, proxyAddr net.Addr)
 		return fmt.Errorf("Listener timed out")
 	}
 	logger.Info("Creating new spawner")
-	spawner, err := handler.NewProxySpawner(serverAddr, proxyAddr, ctx, proxy.TcpListner)
+	spawner, err := handler.NewProxySpawner(serverAddr, proxyAddr, ctx, proxy.TcpListener)
 	if err != nil {
 		cancel(err)
 		logger.Error("Failed to setup ProxySpawner", "Error", err.Error(), "ServerAddress", serverAddr)
@@ -130,8 +130,8 @@ func TcpTestServer(ctx context.Context, serverAddr net.Addr, proxyAddr net.Addr)
 	}
 	logger.Info("Sent echo data")
 	if n != len(echoData) {
-		cancel(errors.New("didnt send enough data"))
-		return errors.New("didnt send enough data")
+		cancel(errors.New("didn't send enough data"))
+		return errors.New("didn't send enough data")
 	}
 	logger.Info("Getting data")
 	buffer := make([]byte, 1024)

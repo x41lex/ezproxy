@@ -95,10 +95,10 @@ func (l *authLookup) newKeyInt(perms int) uint64 {
 	panic("failed to generate new key")
 }
 
-// Checks if the request has the desired permsisions, if not a 400, 401 or 403 error code will be written depending on
+// Checks if the request has the desired permissions, if not a 400, 401 or 403 error code will be written depending on
 // why the key is invalid and false will be returned.
 func (l *authLookup) checkPermission(w http.ResponseWriter, r *http.Request, requires ...authPerms) bool {
-	// We do it manually so we can use diffrent status codes based on state.
+	// We do it manually so we can use different status codes based on state.
 	qr := r.URL.Query()
 	if !qr.Has("key") {
 		writeResponse(w, http.StatusUnauthorized, "missing 'key' parameter")
@@ -107,7 +107,7 @@ func (l *authLookup) checkPermission(w http.ResponseWriter, r *http.Request, req
 	keyStr := qr.Get("key")
 	key, err := strconv.ParseUint(keyStr, 16, 64)
 	if err != nil {
-		writeResponse(w, http.StatusUnauthorized, "invalid 'key' parmeter")
+		writeResponse(w, http.StatusUnauthorized, "invalid 'key' parameter")
 		return false
 	}
 	value, found := l.keys[key]

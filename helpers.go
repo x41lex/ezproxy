@@ -29,7 +29,7 @@ func versionToString(v uint32) string {
 	// 1:2: Reserved
 	// 2:4: Major version (Major features added, breaking changes)
 	// 4:6: Minor version (Minor features added, no breaking changes)
-	// 6:8: Revision      (Bug fixes, Perfomance changes)
+	// 6:8: Revision      (Bug fixes, Performance changes)
 	suffix := ""
 	if v&versionExperimental != 0 {
 		suffix = "e"
@@ -49,7 +49,7 @@ func getLocalIp() (net.Addr, error) {
 }
 
 type ConfigAddress struct {
-	Address string `yaml:"Address"` // Leave empty to use local addres
+	Address string `yaml:"Address"` // Leave empty to use local address
 	Port    uint16 `yaml:"Port"`
 }
 
@@ -195,7 +195,7 @@ func setupSpawnerAndApi(cfg *ConfigData) handler.IProxySpawner {
 	}
 	ctx, cancel := context.WithCancelCause(context.Background())
 	logger.Debug("Setup proxySpawner", "Server", svAddr.String(), "Proxy", pxAddr.String())
-	ps, err := handler.NewProxySpawner(svAddr, pxAddr, ctx, proxy.TcpListner, proxy.UdpListner)
+	ps, err := handler.NewProxySpawner(svAddr, pxAddr, ctx, proxy.TcpListener, proxy.UdpListener)
 	if err != nil {
 		logger.Error("Failed to create ProxySpawner", "Error", err.Error())
 		cancel(err)
