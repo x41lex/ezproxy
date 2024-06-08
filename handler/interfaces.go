@@ -63,7 +63,8 @@ type IProxyContainer interface {
 	GetServerAddr() net.Addr           // Gets the address of the server
 	GetClientAddr() net.Addr           // Gets the address of the client
 	GetBytesSent() uint64              // Gets the total number of bytes sent
-	LastContactTimeAgo() time.Duration // Gets the last time data was sent or received from this proxy
+	GetLastContactTime() time.Time     // Get the last contact time
+	LastContactTimeAgo() time.Duration // Deprecated: Use GetLastContactTime. Gets the last time data was sent or received from this proxy
 }
 
 // Creates a new proxy container
@@ -92,7 +93,7 @@ type IProxySpawner interface {
 	IConnectionAdder
 	GetContext() context.Context                                                                                   // Gets the context the spawner is using
 	GetAllProxies() []IProxyContainer                                                                              // Gets all proxies currently alive
-	Close() error                                                                                                  // Closes the spawner and all proxies
+	Close() error                                                                                                  // Closes all recvChans and contexts, this doesn't call the proxies .Close method, they are expected to poll there context.
 	CloseProxy(id int) error                                                                                       // Closes the target proxy if it exists, if not a error is returned
 	TrySetFilterCallback(cb PacketSendCallback, ctx context.Context) error                                         // Attempt to set the filter callback, if one is already set the context is cancelled.
 	SetErrorCallback(cb ProxyErrorCallback)                                                                        // Sets the error callback
@@ -101,11 +102,9 @@ type IProxySpawner interface {
 	SendToAllServers(data []byte) error                                                                            // Deprecated: Use GetAllProxies and .SendToServer instead, as it returns errors better.
 	IsAlive() bool                                                                                                 // Checks if the spawner is alive
 	GetRecvChan(ctx context.Context) (recv <-chan PacketChanData, rCtx context.Context, cancel context.CancelFunc) // Get a unique channel to handle get packets, this channel will be closed when the context is closed, this is a unbuffered channel and will not block if packets are not read.
-	// New
-	RegisterMpx(mpxName string, protocol PxProto, address net.Addr, listener IProxyListener) error
-	// Deprecated
-	HandleSend(data []byte, flags CapFlags, proxy IProxyContainer) (shouldSend bool) // Handles a packet being sent
-	HandleError(err error, pc IProxyContainer)                                       //  Handles a error being thrown, if pc is nil the error is in IProxySpawner
+	RegisterMpx(mpxName string, protocol PxProto, address net.Addr, listener IProxyListener) error                 // Register a new MPX
+	HandleSend(data []byte, flags CapFlags, proxy IProxyContainer) (shouldSend bool)                               // Handles a packet being sent
+	HandleError(err error, pc IProxyContainer)                                                                     // Deprecated. Handles a error being thrown, if pc is nil the error is in IProxySpawner
 }
 
 type IConnectionAdder interface {

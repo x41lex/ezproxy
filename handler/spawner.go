@@ -97,6 +97,7 @@ func (p *ProxySpawner) addListener(h IProxyListener) {
 			if retryCount >= 3 {
 				p.logger.Error("Proxy got max retries", "Retries", retryCount, "Error", cause.Error())
 				p.HandleError(ErrProxyMaxRetries, nil)
+				p.contextCancel(cause)
 				return
 			}
 			retryCount++
@@ -104,11 +105,10 @@ func (p *ProxySpawner) addListener(h IProxyListener) {
 			p.logger.Info("Retrying listener", "Retries", retryCount, "Error", cause.Error())
 			continue
 		} else if errors.Is(cause, ErrProxyClosedOk) {
-			p.logger.Info("Proxy closed, closing spawner", "Error", cause.Error())
-			p.contextCancel(ErrSpawnerClosedOk)
+			p.logger.Info("Proxy listener closed ok", "Error", cause.Error())
 			return
 		} else {
-			p.logger.Error("Error when listener closed", "Error", cause.Error())
+			p.logger.Error("Error when listener closed, closing spawner", "Error", cause.Error())
 			p.HandleError(context.Cause(ctx), nil)
 			p.contextCancel(cause)
 			return
@@ -169,8 +169,10 @@ func (p *ProxySpawner) HandleSend(data []byte, flags CapFlags, pc IProxyContaine
 			p.sendCallback = nil
 		} else {
 			p.logger.Debug("Calling sendCallback", "Data", data, "Flags", flags)
-			if !p.sendCallback(data, flags, pc) {
-				// If we're dropping it we don't need to do anything else.
+			cbResult := p.sendCallback(data, flags, pc)
+			// If the callback says drop & this isn't injected we return early, not sending to recvChans
+			// if injected or allowed we keep going.
+			if !cbResult && !flags.IsInjected() {
 				return false
 			}
 		}
@@ -184,7 +186,7 @@ func (p *ProxySpawner) HandleSend(data []byte, flags CapFlags, pc IProxyContaine
 			select {
 			case v.Recv <- pktData:
 			default:
-				// No activity - ignore (Maybe remove the chan in the future, but honestly that data leak is on the user)
+				// No activity - ignore (This is sorta a data leak, but you just need to close the context, thats on you.)
 				p.logger.Warn("Packet data not handled on channel", "Index", i)
 			}
 		}
@@ -193,6 +195,8 @@ func (p *ProxySpawner) HandleSend(data []byte, flags CapFlags, pc IProxyContaine
 	return true
 }
 
+// Deprecated: Log errors or cancel the context
+//
 // Error callback
 // Logs the error if logger is not nil
 // Calls p.errorCallback if its not nil
@@ -302,7 +306,7 @@ func (p *ProxySpawner) GetAllProxies() []IProxyContainer {
 	return c
 }
 
-// Closes all the proxies
+// Closes all the proxies, can take up to 3 seconds
 func (p *ProxySpawner) Close() error {
 	p.logger.Debug("Closing spawner")
 	for _, v := range p.rcChan {
@@ -310,15 +314,16 @@ func (p *ProxySpawner) Close() error {
 		close(v.Recv)
 	}
 	p.contextCancel(ErrSpawnerClosedOk)
-	doneWg := make(chan bool)
+	doneCh := make(chan bool)
+	// The pruner should be removing stuff
 	go func() {
-		defer close(doneWg)
-		p.wg.Done()
+		defer close(doneCh)
+		p.wg.Wait()
 	}()
 	select {
-	case <-doneWg:
+	case <-doneCh:
 		return nil
-	case <-time.After(time.Second):
+	case <-time.After(time.Second * 1):
 		p.logger.Debug("Closing spawner timed out")
 		return errors.New("timed out closing proxies")
 	}
@@ -353,6 +358,8 @@ func (p *ProxySpawner) TrySetFilterCallback(cb PacketSendCallback, ctx context.C
 	return nil
 }
 
+// Deprecated: Use logging for non fatal and close contexts for fatal.
+//
 // Sets the error callback for all proxies
 func (p *ProxySpawner) SetErrorCallback(cb ProxyErrorCallback) {
 	p.errorCallback = cb
@@ -416,13 +423,11 @@ func (p *ProxySpawner) GetRecvChan(ctx context.Context) (recv <-chan PacketChanD
 
 // Creates a new proxy spawner
 // Uses default container (NewProxyContainer)
-// logger may be nil, at least one listener must exist.
 func NewProxySpawner(server net.Addr, ctx context.Context) (*ProxySpawner, error) {
 	return NewProxySpawnerWithContainer(server, NewProxyContainer, ctx)
 }
 
 // Creates a new proxy spawner
-// logger may be nil, at least one listener must exist.
 func NewProxySpawnerWithContainer(server net.Addr, containerMaker CreateIProxyContainer, ctx context.Context) (*ProxySpawner, error) {
 	psContext, cancel := context.WithCancelCause(ctx)
 	ps := &ProxySpawner{

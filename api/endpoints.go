@@ -150,7 +150,6 @@ func (a *WebApi) epInject(w http.ResponseWriter, r *http.Request) {
 func isValidCreationPerm(currentValue int, userPerms int, desiredPerms int, perm authPerms) (int, bool) {
 	// First we check if we even care about this one
 	if !checkPermission(desiredPerms, perm) {
-		// We don't
 		return currentValue, true
 	}
 	// Then we check if the user has permission to do anything with that

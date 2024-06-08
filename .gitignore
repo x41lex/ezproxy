@@ -28,3 +28,10 @@ tools/bindings/cs/*
 
 # Log info
 log
+
+# VScode stuff
+.vscode/**
+
+# Testing data
+cover.html
+cover.out
