@@ -1,0 +1,131 @@
+# Testing coverage guide
+To view coverage run `go test -v -coverpkg=./... -coverprofile cover.out ezproxy/* && go tool cover -html cover.out -o cover.html && .\cover.html`
+
+To run tests run `go test -coverpkg=./...`
+
+# Targets
+## handler/spawner.go
+- [X] AddConnection
+  - [X] `p.context` is dead (Fails)
+  - [X] `p.containerMaker` returns a error (Fails)
+  - [X] Proxy is added ok (Ensure container maker is called)
+    - [X] Ensure Proxy Id increments
+    - [X] Ensure proxy exists
+    - [X] Ensure pruning works
+- [X] HandleSend
+  - [X] Ensure that if `sendCallback` is `nil` the return value is true
+  - [X] Ensure `sendCallback` is called on send
+  - [X] Ensure `sendCallbacks` return is respected
+  - [X] Ensure packets with the `handler.CapFlag_Injected` bit set cannot be dropped
+  - [X] Ensure when `callbackCtx` is cancelled the callback is correctly removed
+- [X] HandleError (Deprecated)
+    - [X] Don't test (Will we removed soon)
+- [X] GetContext
+  - [X] Ensure it returns the correct context
+- [X] GetProxyAddr
+  - [X] Ensure return is correct
+- [X] GetServerAddr
+  - [X] Ensure return is correct
+- [ ] GetProxy (Tested by proxy via **AddConnection**)
+  - [ ] Ensure it gets a proxy (See 'AddConnection')
+  - [ ] Ensure it doesn't return when no proxy is found
+- [ ] GetAllProxies (Tested by proxy via **AddConnection**)
+  - [ ] Ensure it returns valid proxies
+- [ ] Close
+  - [X] Ensure the context is cancelled with `handler.ErrSpawnerClosedOk`
+  - [ ] Ensure all recv channels contexts are closed
+    - [ ] Maybe check if the channel is closed by sending on it and expected a panic?
+- [X] CloseProxy
+  - [X] Ensure you can only close valid proxies
+  - [X] Ensure proxies contexts are correctly closed with `handler.ErrProxyClosedOk`
+  - [X] Ensure only expected proxies are closed
+- [X] TrySetFilterCallback
+  - [X] Ensure you can set filter callbacks
+  - [X] Don't allow setting a callback if one already exists
+  - [X] Ensure you can set a filter after a previous filter if its context was cancelled
+- [ ] SetErrorCallback (Deprecated)
+  - [ ] Don't test (Remove)
+- [X] GetBytesSent
+  - [X] Ensure return if correct
+- [ ] SendToAllClients (Deprecated)
+  - [ ] Don't test (Remove)
+- [ ] SendToAllServers (Deprecated)
+  - [ ] Don't test (Remove)
+- [ ] IsAlive (Tested by proxy via a most tests)
+  - [ ] Ensure the return is correct with the context
+- [X] GetRecvChan
+  - [X] Ensure a unique channel is got
+  - [X] Ensure channels stop getting data after the context dies
+  - [X] Ensure data is got on it correctly.
+  - [X] Ensure `IsAlive` is still true after the context is closed
+  - [X] Ensure packets are ignored if they aren't handled & don't just hang the program, but they still send data after
+  - [X] Ensure data is sent to all recv channels correctly.
+    - [X] Ensure the addresses are correct
+    - [X] Ensure data is sent when callback returns true
+    - [X] Ensure data is sent when there is no callback
+    - [X] Ensure the order data is sent is correct.
+    - [X] Ensure data is removed from channel and execution is not stopped if the channel is ignored, but keep the channel open.
+    - [X] Ensure data is sent correctly with a filterer 
+      * Data is sent when callback returns true
+      * Data isn't sent when callback returns false
+      * Data is sent if callback is false but `CapFlag_Inject` flag is set
+- [X] NewProxySpawnerWithContainer
+  - [X] Ensure failure if server addr & proxy addr are the same
+  - [X] Ensure failure if there are no listeners
+  - [X] Ensure failure (after listeners are called) if context is cancelled
+  - [X] Ensure listeners are called
+  - [X] Ensure `IProxyContainer` is called
+- [ ] Misc
+  - [X] Ensure the context is cancelled and a error is returned if the listener is closed without closing its context
+  - [X] Ensure the spawner context isn't cancelled if a listener cancels with `ErrProxyClosedOk`
+  - [X] Ensure the spawner context is cancelled if a listener cancels with any other error
+  - [X] Ensure listeners are retired with `ErrProxyRetry` & cancels after max retries (3)
+  - [ ] Ensure the spawner context is closed if all listeners are closed and all proxies are closed. (Maybe?)
+## handler/proxy.go (ProxyContainer)
+- [X] SendToClient 
+  - [X] Ensure a error is returned if the context is dead
+  - [X] Ensure data is passed to `HandleSend` correctly
+  - [X] Ensure data is not forwarded if `HandleSend` returns false
+  - [X] Ensure `px.SendToClient` is called if `HandleSend` returns true
+  - [X] Ensure bytesSent is incremented
+  - [X] Ensure lastContactTime is set
+  - [X] Ensure error is returned if `px.SendToClient` fails
+- [X] SendToServer
+  - [X] Ensure a error is returned if the context is dead
+  - [X] Ensure data is passed to `HandleSend` correctly
+  - [X] Ensure data is not forwarded if `HandleSend` returns false
+  - [X] Ensure `px.SendToServer` is called if `HandleSend` returns true
+  - [X] Ensure bytesSent is incremented
+  - [X] Ensure lastContactTime is set
+  - [X] Ensure error is returned if `px.SendToServer` fails
+- [X] GetServerAddr
+  - [X] Ensure correct address is correct
+- [X] GetClientAddr
+  - [X] Ensure correct address is correct
+- [X] Close
+  - [X] Ensure proxy context is cancelled with `handler.ErrProxyClosedOk`
+- [X] Network
+  - [X] Ensure correct network is returned from proxy
+- [X] IsAlive
+  - [X] Ensure the return is correct with the context
+- [X] GetId
+  - [X] Ensure correct ID is returned
+- [X] Cancel
+  - [X] Ensure the context in cancelled correctly 
+  - [X] Ensure Proxy context is cancelled
+- [X] GetBytesSent
+  - [X] Ensure the number of bytes returned is correct
+    - [X] On data to packet chan
+    - [X] On data from `SendToServer`
+    - [X] On data from `SendToClient`
+- [ ] LastContactTimeAgo (Deprecated)
+  - [ ] Don't test (Remove)
+- [X] GetLastContactTime
+  - [X] Ensure the value is at start
+  - [X] Ensure the value is correct
+    - [X] On data to packet chan
+    - [X] On data from `SendToServer`
+    - [X] On data from `SendToClient`
+- [X] NewProxyContainer
+  - [X] Creates ok, arguments are passed ok, context is created from parent context
+  - [X] Fails if `IProxy.Init` returns a error

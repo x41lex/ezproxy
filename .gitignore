@@ -31,3 +31,7 @@ log
 
 # VScode stuff
 .vscode/**
+
+# Testing data
+cover.html
+cover.out

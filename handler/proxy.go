@@ -65,6 +65,9 @@ func (pc *ProxyContainer) handlePacket() {
 
 // Inject data to client, calls the sendCallback and doesn't send it if the callback returns false
 func (pc *ProxyContainer) SendToClient(data []byte) error {
+	if pc.ctx.Err() != nil {
+		return context.Cause(pc.ctx)
+	}
 	if !pc.spawner.HandleSend(data, CapFlag_Injected, pc) {
 		pc.logger.Debug("Not sending packet from SendToClient", "Data", data, "Dest", pc.GetClientAddr(), "Serverbound", false)
 		// Don't send
@@ -85,6 +88,9 @@ func (pc *ProxyContainer) SendToClient(data []byte) error {
 
 // Inject data to server, calls the sendCallback and doesn't send it if the callback returns false
 func (pc *ProxyContainer) SendToServer(data []byte) error {
+	if pc.ctx.Err() != nil {
+		return context.Cause(pc.ctx)
+	}
 	if !pc.spawner.HandleSend(data, CapFlag_ToServer|CapFlag_Injected, pc) {
 		pc.logger.Debug("Not sending packet from SendToServer", "Data", data, "Dest", pc.GetServerAddr(), "Serverbound", true)
 		// Don't send
@@ -143,6 +149,11 @@ func (pc *ProxyContainer) GetBytesSent() uint64 {
 	return pc.bytesSent
 }
 
+func (pc *ProxyContainer) GetLastContactTime() time.Time {
+	return pc.lastContactTime
+}
+
+// Deprecated: Use GetLastContactTime
 func (pc *ProxyContainer) LastContactTimeAgo() time.Duration {
 	pc.statsLock.RLock()
 	defer pc.statsLock.RUnlock()
@@ -163,7 +174,7 @@ func NewProxyContainer(parent IProxySpawner, px IProxy, id int) (IProxyContainer
 		logger:          slog.Default(),
 		statsLock:       sync.RWMutex{},
 		bytesSent:       0,
-		lastContactTime: time.Now(),
+		lastContactTime: time.Unix(0, 0),
 	}
 	go pc.handlePacket()
 	pc.logger.Debug("Init on new IProxy", "Id", id, "Client", px.GetClientAddr())

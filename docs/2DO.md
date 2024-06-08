@@ -35,6 +35,8 @@ Only the *original* connections is able to filter packets, that or any connectio
 - [ ] Go
 <br>This probably should have been second huh.
 - [X] Lua (Embedded scripting)
+## Spawner
+- [ ] Remove `HandleSend` or replace it, its sorta a goofy way to do this that maybe would be better with a channel that reads & sends data if its allowed, thats seems way easier & safer.
   
 ## Interesting
 - [ ] Use raw sockets (On UNIX use `socket(AF_PACKET, RAW_SOCKET))` for L2 or `socket(AF_INET, RAW_SOCKET)` for L3) on windows use [npcap](https://npcap.com/guide/wpcap/pcap_inject.html) `pcap_inject`<
